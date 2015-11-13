@@ -11,30 +11,29 @@ total_success = 0
 URL = 'http://10.0.1.10/test'
 
 
-def handle_resp(response):
+@tornado.gen.coroutine
+def fetch(client):
+    global total_requests
     global total_success
-    if response.code == 200:
+
+    total_requests += 1
+    ret = yield client.fetch(
+        URL,
+        request_timeout=1,
+    )
+    if ret.code == 200:
         total_success += 1
-    elif True:
-        print (response)
 
 
 @tornado.gen.coroutine
 def main():
-    global total_requests
     http_client = tornado.httpclient.AsyncHTTPClient(
         max_clients=200,
         #hostname_mapping={'10.0.1.10': '10.0.1.10'},
     )
     while True:
-        total_requests += 1
-        http_client.fetch(
-            URL,
-            handle_resp,
-            request_timeout=1,
-        )
-        if total_requests % 10 == 0:
-            yield tornado.gen.moment
+        fetch(http_client)
+        yield tornado.gen.moment
 
 
 last_requests = last_success = 0
